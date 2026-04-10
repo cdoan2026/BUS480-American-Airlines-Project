@@ -81,7 +81,8 @@ toc_items = [
     '5. Exploratory Data Analysis (EDA)',
     '6. Machine Learning Methods — Problem 1',
     '7. Machine Learning Methods — Problem 2',
-    '8. Results and Insights',
+    '8. Machine Learning Methods — Problem 3',
+    '9. Results and Insights',
 ]
 for item in toc_items:
     doc.add_paragraph(item, style='List Number')
@@ -92,7 +93,7 @@ doc.add_page_break()
 add_heading('1. Executive Summary', level=1)
 
 doc.add_paragraph(
-    'This project investigates two core business questions for American Airlines:'
+    'This project investigates three core business questions for American Airlines:'
 )
 
 add_para('Problem 1 — Who is Gen Z compared to other generations?', bold=True)
@@ -107,6 +108,14 @@ doc.add_paragraph(
     'What actually makes Gen Z stay loyal? We answer this using two gradient boosting models '
     '(XGBoost and LightGBM) paired with SHAP explainability to identify and rank the specific '
     'service factors that drive Gen Z loyalty enrollment.'
+)
+
+add_para('Problem 3 — How does flight delay impact Gen Z loyalty?', bold=True)
+doc.add_paragraph(
+    'While Problem 2 identified service factors, this problem focuses on operational friction. '
+    'It measures resilience: at what delay duration does Gen Z abandon loyalty faster than older generations? '
+    'We answer this using binned delay analysis, logistic regression with generation interaction terms, '
+    'and per-generation SHAP comparisons.'
 )
 
 doc.add_paragraph(
@@ -526,10 +535,95 @@ add_bullet(' Individual member explanations showing exactly how each feature pus
 
 doc.add_page_break()
 
-# ===== 8. RESULTS AND INSIGHTS =====
-add_heading('8. Results and Insights', level=1)
+# ===== 8. ML METHODS — PROBLEM 3 =====
+add_heading('8. Machine Learning Methods — Problem 3', level=1)
 
-add_heading('8.1 Problem 1 — Who Is Gen Z?', level=2)
+doc.add_paragraph(
+    'Problem 3 asks: how does flight delay duration impact the loyalty enrollment probability '
+    'of Gen Z compared to older generations? While Problem 2 identified service factors (WiFi, '
+    'cleanliness), this problem focuses on operational friction — measuring at what point a delay '
+    'causes Gen Z to abandon their loyalty toward the airline.'
+)
+
+add_heading('8.1 Binned Delay Analysis', level=2)
+
+add_heading('Introduction', level=3)
+doc.add_paragraph(
+    'Delays are binned into practical categories (No Delay, 1-15 min, 16-30 min, 31-60 min, '
+    '61-120 min, 120+ min) and the loyalty rate is computed at each level per generation. '
+    'A finer 10-minute bin analysis is also run up to 180 minutes to pinpoint exact thresholds.'
+)
+
+add_heading('Why This Is Important for This Problem', level=3)
+doc.add_paragraph(
+    'Raw delay minutes are noisy. Binning reveals the practical "breaking points" where loyalty '
+    'drops most steeply. If Gen Z\'s loyalty curve drops earlier and more sharply than Millennials '
+    'or Gen X, that directly informs American Airlines\' operations: which routes to prioritize '
+    'for on-time performance, and at what delay duration to trigger proactive retention actions.'
+)
+
+add_heading('Results and Output', level=3)
+add_bullet('Loyalty rate table by delay bin and generation — shows exact percentages at each threshold')
+add_bullet('Line charts plotting loyalty rate curves for each generation across delay bins')
+add_bullet('Fine-grained 10-minute bin chart identifying the specific delay duration where Gen Z loyalty drops fastest')
+add_bullet('Delay resilience summary: loyalty rate drop from no-delay to short-delay (1-30 min) and long-delay (60+ min) per generation')
+
+add_heading('8.2 Logistic Regression with Interaction Terms', level=2)
+
+add_heading('Introduction', level=3)
+doc.add_paragraph(
+    'A logistic regression is fit with Departure Delay, Arrival Delay, a Gen Z indicator, and '
+    'crucially, Delay x Gen Z interaction terms. The interaction coefficient directly tests '
+    'whether the effect of delay on loyalty differs for Gen Z versus other generations.'
+)
+
+add_heading('Why This Is Important for This Problem', level=3)
+doc.add_paragraph(
+    'This is the statistical test for the core hypothesis. The binned analysis shows descriptive '
+    'patterns, but the interaction term provides a formal p-value answering: "Is the delay-loyalty '
+    'relationship statistically different for Gen Z?" A significant negative interaction coefficient '
+    'means delay hurts Gen Z loyalty more than other generations, controlling for age and flight distance.'
+)
+
+add_heading('Implementation Details', level=3)
+add_bullet('Model: statsmodels Logit for full coefficient table with p-values')
+add_bullet('Features: Departure Delay, Arrival Delay, is_genz (binary), dep_delay x genz (interaction), arr_delay x genz (interaction), Age, Flight Distance')
+add_bullet('Target: is_loyal (binary)')
+add_bullet('Output: Odds ratios for each coefficient — the interaction odds ratio shows how much more (or less) each minute of delay affects Gen Z loyalty probability versus the baseline')
+
+add_heading('Results and Output', level=3)
+add_bullet('Full coefficient table with odds ratios, p-values, and significance flags')
+add_bullet('Interpretation of interaction terms: direction (stronger/weaker negative effect) and magnitude')
+
+add_heading('8.3 Per-Generation SHAP Comparison', level=2)
+
+add_heading('Introduction', level=3)
+doc.add_paragraph(
+    'Separate XGBoost models are trained for Gen Z and for older generations (Millennials + Gen X). '
+    'SHAP values are computed for the delay features in each model, then compared. If the mean '
+    'absolute SHAP value for delay is larger in the Gen Z model, delays have a bigger impact on '
+    'Gen Z loyalty predictions.'
+)
+
+add_heading('Why This Is Important for This Problem', level=3)
+doc.add_paragraph(
+    'The logistic regression provides a linear test. The per-generation SHAP comparison captures '
+    'non-linear effects. A delay might not matter until it exceeds 30 minutes, then matter enormously '
+    'for Gen Z but only modestly for Gen X. SHAP dependence plots visualize these non-linear '
+    'threshold effects that a linear interaction term would miss.'
+)
+
+add_heading('Results and Output', level=3)
+add_bullet('Mean |SHAP| for departure and arrival delay in each generation\'s model')
+add_bullet('Gen Z / Older generation ratio — a value > 1.0 means Gen Z is more sensitive to that delay type')
+add_bullet('Side-by-side SHAP dependence scatter plots showing how delay minutes map to loyalty impact for Gen Z vs older generations')
+
+doc.add_page_break()
+
+# ===== 9. RESULTS AND INSIGHTS =====
+add_heading('9. Results and Insights', level=1)
+
+add_heading('9.1 Problem 1 — Who Is Gen Z?', level=2)
 
 add_para('Loyalty Enrollment', bold=True)
 doc.add_paragraph(
@@ -565,7 +659,7 @@ doc.add_paragraph(
     'effective for marketing.'
 )
 
-add_heading('8.2 Problem 2 — What Motivates Gen Z Loyalty?', level=2)
+add_heading('9.2 Problem 2 — What Motivates Gen Z Loyalty?', level=2)
 
 add_para('Model Performance', bold=True)
 doc.add_paragraph(
@@ -592,7 +686,38 @@ add_bullet('Enrollment probability scores for every Gen Z member in the test set
 add_bullet('Specific service areas where investment would most impact Gen Z loyalty')
 add_bullet('Evidence for whether one-size-fits-all or segmented campaigns are appropriate (based on SHAP variance)')
 
-add_heading('8.3 Method Justification Summary', level=2)
+add_heading('9.3 Problem 3 — How Do Delays Impact Gen Z Loyalty?', level=2)
+
+add_para('Delay Tolerance Threshold', bold=True)
+doc.add_paragraph(
+    'The binned delay analysis and fine-grained 10-minute bin charts show whether Gen Z\'s loyalty '
+    'rate curve drops earlier and more steeply than older generations. The "breaking point" is the '
+    'delay duration where Gen Z loyalty falls below a critical threshold (e.g., 50%) while older '
+    'generations remain above it.'
+)
+
+add_para('Statistical Significance of Generational Difference', bold=True)
+doc.add_paragraph(
+    'The logistic regression interaction terms provide formal statistical evidence for whether '
+    'delay\'s effect on loyalty is significantly different for Gen Z. A significant negative '
+    'interaction coefficient means each additional minute of delay reduces Gen Z\'s loyalty '
+    'probability more than it does for other generations.'
+)
+
+add_para('SHAP-Based Sensitivity Comparison', bold=True)
+doc.add_paragraph(
+    'The per-generation SHAP comparison quantifies exactly how much more (or less) sensitive Gen Z is '
+    'to delays compared to Millennials and Gen X. The side-by-side SHAP dependence plots reveal '
+    'whether the relationship is linear (every minute hurts equally) or threshold-based (no effect '
+    'until a certain point, then rapid deterioration).'
+)
+
+add_para('Actionable Recommendations for Problem 3', bold=True)
+add_bullet('If Gen Z shows lower delay tolerance, prioritize on-time performance on routes with high Gen Z ridership')
+add_bullet('Consider proactive delay compensation (app notifications, vouchers) tailored to Gen Z preferences')
+add_bullet('Set delay-triggered retention actions at the identified Gen Z breaking point threshold')
+
+add_heading('9.4 Method Justification Summary', level=2)
 
 add_table(
     ['Method', 'Problem', 'Why Chosen'],
@@ -602,6 +727,9 @@ add_table(
         ['XGBoost', '2', 'Handles non-linear relationships, mixed feature types, and produces feature importance rankings'],
         ['LightGBM', '2', 'Validates XGBoost findings through model agreement; leaf-wise growth may capture different patterns'],
         ['SHAP', '2', 'Moves from "what matters" to "how much and in which direction for each individual" — enables actionable recommendations'],
+        ['Binned Delay Analysis', '3', 'Reveals the practical delay threshold where Gen Z loyalty drops most steeply'],
+        ['Logistic Regression (Interaction)', '3', 'Formal statistical test for whether delay affects Gen Z loyalty differently than other generations'],
+        ['Per-Generation SHAP', '3', 'Captures non-linear delay effects and quantifies Gen Z sensitivity ratio vs older cohorts'],
     ]
 )
 
